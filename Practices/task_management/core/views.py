@@ -4,9 +4,11 @@ import logging
 from django.shortcuts import render
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.viewsets import ModelViewSet
 
 from .models import Category, Priority, Project, Task, User
+from .permissions import IsAdmin, IsEmployee, IsManager
 from .serializers import (
     CategorySerializer,
     PrioritySerializer,
@@ -22,10 +24,14 @@ class UserViewSet(ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
 
+    permission_classes = [IsAdmin]
+
 
 class ProjectViewSet(ModelViewSet):
     queryset = Project.objects.all()
     serializer_class = ProjectSerializer
+
+    permission_classes = [IsManager]
 
 
 class CategoryViewSet(ModelViewSet):
@@ -39,6 +45,8 @@ class PriorityViewSet(ModelViewSet):
 
 
 class TaskViewSet(ModelViewSet):
+    permission_classes = [IsEmployee]
+
     queryset = Task.objects.all()
     serializer_class = TaskSerializer
 
