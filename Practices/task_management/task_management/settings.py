@@ -35,8 +35,8 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "rest_framework_simplejwt",
     "rest_framework",
+    "rest_framework_simplejwt",
     "core",
 ]
 
@@ -153,3 +153,5 @@ LOGGING = {
         "level": "INFO",
     },
 }
+
+AUTH_USER_MODEL = "core.User"
