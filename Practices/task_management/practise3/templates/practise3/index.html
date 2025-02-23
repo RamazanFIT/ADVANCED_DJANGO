@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>User Health Goals & Nutrient Intake</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .container {
+            width: 80%;
+            margin: auto;
+            text-align: center;
+        }
+        canvas {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>{{ user.username }}'s Health Goals</h2>
+        <p>Calories: {{ health_goal.daily_calorie_goal }} kcal</p>
+        <p>Carbs: {{ health_goal.carb_goal }} g | Proteins: {{ health_goal.protein_goal }} g | Fats: {{ health_goal.fat_goal }} g</p>
+
+        <h3>Macronutrient Breakdown</h3>
+        <canvas id="barChart"></canvas>
+        <canvas id="pieChart"></canvas>
+        <canvas id="lineChart"></canvas>
+    </div>
+
+    <script>
+        fetch("{% url 'chart-data' %}")
+            .then(response => response.json())
+            .then(data => {
+                const labels = data.labels;
+
+                new Chart(document.getElementById('barChart').getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            { label: 'Carbs', data: data.carbs, backgroundColor: 'rgba(255, 99, 132, 0.6)' },
+                            { label: 'Proteins', data: data.proteins, backgroundColor: 'rgba(54, 162, 235, 0.6)' },
+                            { label: 'Fats', data: data.fats, backgroundColor: 'rgba(255, 206, 86, 0.6)' }
+                        ]
+                    }
+                });
+
+                new Chart(document.getElementById('pieChart').getContext('2d'), {
+                    type: 'pie',
+                    data: {
+                        labels: ['Carbs', 'Proteins', 'Fats'],
+                        datasets: [{
+                            data: [
+                                data.carbs.reduce((a, b) => a + b, 0),
+                                data.proteins.reduce((a, b) => a + b, 0),
+                                data.fats.reduce((a, b) => a + b, 0)
+                            ],
+                            backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56']
+                        }]
+                    }
+                });
+
+                new Chart(document.getElementById('lineChart').getContext('2d'), {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Calories',
+                            data: data.calories,
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            fill: false,
+                            tension: 0.3
+                        }]
+                    }
+                });
+            });
+    </script>
+</body>
+</html>

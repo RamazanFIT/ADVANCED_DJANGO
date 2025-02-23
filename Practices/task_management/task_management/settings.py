@@ -40,12 +40,14 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "rest_framework",
     "rest_framework_simplejwt",
+    "djoser",
+    "users",
     "todolist",
     "core",
     "additional_tasks",
     "email_app",
     "drf_yasg",
-
+    "practise3"
 ]
 
 MIDDLEWARE = [
@@ -163,7 +165,7 @@ LOGGING = {
     },
 }
 
-AUTH_USER_MODEL = "core.User"
+AUTH_USER_MODEL = 'users.User'
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 
@@ -176,3 +178,17 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = env("EMAIL_HOST_USER")
 
 EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD")
+
+DJOSER = {
+    'SERIALIZERS': {
+        'user_create': 'users.serializers.UserCreateSerializer',
+        'user': 'users.serializers.UserSerializer',
+        'current_user': 'users.serializers.UserSerializer',
+        'user_delete': 'djoser.serializers.UserDeleteSerializer',
+    },
+    'PERMISSIONS': {
+        'user_delete': ['rest_framework.permissions.IsAdminUser'],
+        'user': ['rest_framework.permissions.IsAuthenticated'],
+        'user_list': ['rest_framework.permissions.IsAdminUser'],
+    },
+}
