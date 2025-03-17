@@ -40,4 +40,5 @@ urlpatterns = [
     path('', include('todolist.urls')),
     path('', include('additional_tasks.urls')),
     path('', include('email_app.urls')),
+    path('api/', include('api.urls')),
 ]
