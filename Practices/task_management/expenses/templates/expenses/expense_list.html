@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Мои расходы</h2>
+
+<div class="filters">
+    <form method="get">
+        {{ filter.form.as_p }}
+        <button type="submit">Фильтровать</button>
+    </form>
+</div>
+
+<div class="expenses-list">
+    {% for expense in filter.qs %}
+    <div class="expense-item">
+        <h3>{{ expense.description }}</h3>
+        <p>Сумма: {{ expense.amount }}</p>
+        <p>Категория: {{ expense.category.name }}</p>
+        <p>Дата: {{ expense.date }}</p>
+    </div>
+    {% empty %}
+    <p>Нет расходов</p>
+    {% endfor %}
+</div>
+{% endblock %} 
