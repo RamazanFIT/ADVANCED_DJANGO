@@ -41,4 +41,5 @@ urlpatterns = [
     path('', include('additional_tasks.urls')),
     path('', include('email_app.urls')),
     path('api/', include('api.urls')),
+    path('api/expenses/', include('expenses.urls')),
 ]
