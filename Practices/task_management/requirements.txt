@@ -1,0 +1,17 @@
+django>=4.0.0
+djangorestframework
+django-filter
+djoser
+celery
+redis
+spacy
+pytesseract
+pdf2image
+python-docx
+docx2txt
+psycopg2-binary
+djongo
+mysqlclient
+django-cors-headers
+python-magic
+pillow 

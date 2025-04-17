@@ -4,11 +4,15 @@ from django.db import models
 
 class User(AbstractUser):
     ROLE_CHOICES = [
-        ('student', 'Student'),
-        ('teacher', 'Teacher'),
+        ('job_seeker', 'Job Seeker'),
+        ('recruiter', 'Recruiter'),
         ('admin', 'Admin'),
     ]
-    role = models.CharField(max_length=10, choices=ROLE_CHOICES)
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='job_seeker')
+    company = models.CharField(max_length=200, blank=True, null=True)
+    phone_number = models.CharField(max_length=15, blank=True, null=True)
+    is_email_verified = models.BooleanField(default=False)
+    verification_token = models.CharField(max_length=100, blank=True, null=True)
 
     groups = models.ManyToManyField(
         Group,
@@ -24,3 +28,9 @@ class User(AbstractUser):
         help_text='Specific permissions for this user.',
         verbose_name='user permissions',
     )
+
+    class Meta:
+        permissions = [
+            ("can_post_jobs", "Can post jobs"),
+            ("can_review_applications", "Can review applications"),
+        ]

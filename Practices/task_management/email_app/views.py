@@ -5,20 +5,84 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.contrib import messages
 
 from django.conf import settings
-from rest_framework import generics
-
+from rest_framework import generics, status, viewsets, filters
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+from django.core.files.storage import default_storage
+from django_filters.rest_framework import DjangoFilterBackend
 from .models import CV
-from .serializers import CVSerializer
+from .serializers import CVSerializer, CVDetailSerializer
+from .ai_analyzer import ResumeAnalyzer
+from celery import shared_task
+from .tasks import analyze_resume
+from django.core.cache import cache
 
 
-class CVListCreateView(generics.ListCreateAPIView):
-    queryset = CV.objects.all()
-    serializer_class = CVSerializer
+@shared_task
+def process_resume(cv_id):
+    cv = CV.objects.get(id=cv_id)
+    analyzer = ResumeAnalyzer()
+    
+    try:
+        # Чтение файла резюме
+        with default_storage.open(cv.resume_file.name, 'r') as file:
+            content = file.read()
+        
+        # Анализ резюме
+        analysis_results = analyzer.analyze_resume(content)
+        
+        # Обновление модели CV результатами анализа
+        cv.skills = analysis_results['skills']
+        cv.experience = analysis_results['experience']
+        cv.education = analysis_results['education']
+        cv.ai_score = analysis_results['score']
+        cv.ai_feedback = analysis_results['feedback']
+        cv.processing_status = 'processed'
+        cv.save()
+        
+    except Exception as e:
+        cv.processing_status = 'failed'
+        cv.save()
+        raise e
 
 
-class CVRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = CV.objects.all()
-    serializer_class = CVSerializer
+class CVViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    search_fields = ['name', 'skills']
+    filterset_fields = ['processing_status', 'ai_score']
+
+    def get_queryset(self):
+        if self.request.user.role == 'recruiter':
+            return CV.objects.all()
+        return CV.objects.filter(user=self.request.user)
+
+    def get_serializer_class(self):
+        if self.action == 'retrieve':
+            return CVDetailSerializer
+        return CVSerializer
+
+    def perform_create(self, serializer):
+        cv = serializer.save(user=self.request.user)
+        analyze_resume.delay(cv.id)
+
+    @action(detail=True, methods=['post'])
+    def reanalyze(self, request, pk=None):
+        cv = self.get_object()
+        analyze_resume.delay(cv.id)
+        return Response({'status': 'Analysis started'})
+
+    def list(self, request, *args, **kwargs):
+        # Кэширование результатов
+        cache_key = f'cv_list_{request.user.id}'
+        cached_data = cache.get(cache_key)
+        
+        if cached_data is not None:
+            return Response(cached_data)
+            
+        response = super().list(request, *args, **kwargs)
+        cache.set(cache_key, response.data, timeout=300)  # кэшируем на 5 минут
+        return response
 
 
 def share_cv_email(request, cv_id):
